@@ -6,6 +6,7 @@ import PredictForm from './components/PredictForm';
 import ResultPage from './components/ResultPage';
 import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
+import CropRecommend from './components/CropRecommend';
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/predict" element={<PredictForm />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/crop-recommend" element={<CropRecommend />} />
           <Route path="/result" element={<ResultPage />} />
         </Routes>
       </div>

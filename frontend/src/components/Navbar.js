@@ -52,7 +52,7 @@ const Navbar = () => {
               <Link className="btn btn-outline-success" to="/predict">Predict</Link>
             </li>
             <li className="nav-item">
-              <Link className="btn btn-success" to="/crop-recommend">Crop Recommend</Link>
+              <Link className="btn btn-outline-success" to="/crop-recommend">Crop Recommend</Link>
             </li>
           </ul>
         </div>
