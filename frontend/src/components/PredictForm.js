@@ -9,32 +9,18 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { motion } from 'framer-motion';
 
-// Fix default Marker icons
-delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: markerIconPng,
-  shadowUrl: markerShadowPng,
+  shadowUrl: markerShadowPng
 });
 
 const PredictForm = () => {
-  const [formData, setFormData] = useState({
-    Rainfall: '',
-    Area: '',
-    District_Name: '',
-    Season_Encoded: '',
-    Soil_Quality_Encoded: '',
-    Crop: '',
-  });
-
+  const [formData, setFormData] = useState({ Rainfall: '', Area: '', District_Name: '', Season_Encoded: '', Soil_Quality_Encoded: '', Crop: '' });
   const [result, setResult] = useState(null);
   const [graphData, setGraphData] = useState([]);
   const resultRef = useRef(null);
 
-  const [mapInfo, setMapInfo] = useState({
-    center: [19.7515, 75.7139],
-    zoom: 7,
-    markers: []
-  });
+  const [mapInfo, setMapInfo] = useState({ center: [19.7515, 75.7139], zoom: 7, markers: [] });
 
   const districtCoordinates = {
     Ahmednagar: [19.0948, 74.7477], Akola: [20.7096, 77.0085], Amravati: [20.9374, 77.7796],
@@ -47,20 +33,14 @@ const PredictForm = () => {
     Osmanabad: [18.186, 76.0419], Parbhani: [19.2704, 76.7601], Pune: [18.5204, 73.8567],
     Raigad: [18.5236, 73.2896], Ratnagiri: [16.9902, 73.312], Sangli: [16.8544, 74.5815],
     Satara: [17.6805, 74.0183], Sindhudurg: [16.1236, 73.691], Solapur: [17.6599, 75.9064],
-    Thane: [19.2183, 72.9781], Wardha: [20.7381, 78.5967], Washim: [20.1114, 77.1334],
-    Yavatmal: [20.3893, 78.1306]
+    Thane: [19.2183, 72.9781], Wardha: [20.7381, 78.5967], Washim: [20.1114, 77.1334], Yavatmal: [20.3893, 78.1306]
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({ ...prevState, [name]: value }));
-
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (name === 'District_Name' && districtCoordinates[value]) {
-      setMapInfo({
-        center: districtCoordinates[value],
-        zoom: 10,
-        markers: [{ position: districtCoordinates[value], label: value }]
-      });
+      setMapInfo({ center: districtCoordinates[value], zoom: 10, markers: [{ position: districtCoordinates[value], label: value }] });
     }
   };
 
@@ -72,209 +52,119 @@ const PredictForm = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-
-      if (!response.ok) throw new Error('Network response was not ok');
-
       const data = await response.json();
-      setResult(data.predicted_production);
-
       const area = parseFloat(formData.Area);
       const production = parseFloat(data.predicted_production);
-      const yieldPerHectare = production / area;
-
+      setResult(data.predicted_production);
       setGraphData([
         { name: 'Area (Ha)', value: area },
         { name: 'Production (Qtls)', value: production },
-        { name: 'Yield (Qtls/Ha)', value: parseFloat(yieldPerHectare.toFixed(2)) },
+        { name: 'Yield (Qtls/Ha)', value: parseFloat((production / area).toFixed(2)) }
       ]);
-
-      setTimeout(() => {
-        if (resultRef.current) {
-          resultRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Error:', error);
+      resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const ChangeMapCenter = ({ center }) => {
-    const map = useMap();
-    map.flyTo(center, 10, { duration: 1.5 });
+    useMap().flyTo(center, 10, { duration: 1.5 });
     return null;
   };
 
   const downloadPDF = () => {
     const input = document.getElementById('pdfContent');
-
-    if (!input) {
-      console.error("PDF content section not found!");
-      return;
-    }
-
-    html2canvas(input, { 
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: -window.scrollY
-    }).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
+    html2canvas(input, { scale: 2, useCORS: true }).then(canvas => {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const width = pdf.internal.pageSize.getWidth();
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, width, height);
       pdf.save('crop_prediction_report.pdf');
-    }).catch((error) => {
-      console.error('Error generating PDF:', error);
     });
   };
 
-  const customMarker = new L.Icon({
-    iconUrl: markerIconPng,
-    shadowUrl: markerShadowPng,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-
   return (
-    <div className="container mt-5">
-      <motion.h2 
-        className="text-center mb-5"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        Enter Details to Predict Crop Yield
+    <div className="container-fluid bg-body-secondary py-5 min-vh-100">
+      <motion.h2 className="text-center text-primary mb-5 fw-bold" initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+        🌾 Crop Yield Prediction
       </motion.h2>
 
-      <div className="d-flex flex-wrap justify-content-between">
-
-        {/* Left - Form */}
-        <motion.div
-          className="flex-grow-1 me-4 p-4"
-          style={{ minWidth: '300px', maxWidth: '500px', borderRadius: '12px', backgroundColor: '#f7fff7', boxShadow: '0 6px 12px rgba(0,0,0,0.1)' }}
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Rainfall (mm):</label>
-              <input type="number" className="form-control" name="Rainfall" value={formData.Rainfall} onChange={handleChange} required />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Area (in Hectare):</label>
-              <input type="number" className="form-control" name="Area" value={formData.Area} onChange={handleChange} required />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">District Name:</label>
-              <select className="form-control" name="District_Name" value={formData.District_Name} onChange={handleChange} required>
-                <option value="">Select District</option>
-                {Object.keys(districtCoordinates).map((district, index) => (
-                  <option key={index} value={district}>{district}</option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Season:</label>
-              <select className="form-control" name="Season_Encoded" value={formData.Season_Encoded} onChange={handleChange} required>
-                <option value="">Select Season</option>
-                <option value="Rabi">Rabi</option>
-                <option value="Kharif">Kharif</option>
-                <option value="Whole Year">Whole Year</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Soil Quality:</label>
-              <select className="form-control" name="Soil_Quality_Encoded" value={formData.Soil_Quality_Encoded} onChange={handleChange} required>
-                <option value="">Select Soil Quality</option>
-                <option value="Poor">Poor</option>
-                <option value="Moderate">Moderate</option>
-                <option value="Good">Good</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Crop:</label>
-              <select className="form-control" name="Crop" value={formData.Crop} onChange={handleChange} required>
-                <option value="">Select Crop</option>
-                <option value="Groundnut">Groundnut</option>
-                <option value="Cotton">Cotton</option>
-                <option value="Rice">Rice</option>
-                <option value="Barley">Barley</option>
-                <option value="Gram">Gram</option>
-                <option value="Maize">Maize</option>
-                <option value="Mustard">Mustard</option>
-                <option value="Peas">Peas</option>
-                <option value="Pulses">Pulses</option>
-                <option value="Soybean">Soybean</option>
-                <option value="Sugarcane">Sugarcane</option>
-              </select>
-            </div>
-            <button type="submit" className="btn btn-primary w-100">Submit</button>
-          </form>
-        </motion.div>
-
-        {/* Right - Graph */}
-        {graphData.length > 0 && (
-          <motion.div
-            className="flex-grow-1 p-4"
-            style={{ minWidth: '300px', maxWidth: '600px', borderRadius: '12px', backgroundColor: '#f0f4ff', boxShadow: '0 6px 12px rgba(0,0,0,0.1)' }}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1 }}
-          >
-            <h4 className="text-center mb-4">Crop Production Analysis</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={graphData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+      <div className="row justify-content-center">
+        {/* Form Card */}
+        <div className="col-md-5">
+          <motion.div className="card shadow-lg border-0 rounded-4 bg-light p-4 mb-4" initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}>
+            <form onSubmit={handleSubmit}>
+              {['Rainfall', 'Area'].map((field, i) => (
+                <div className="mb-3" key={i}>
+                  <label className="form-label">{field} {field === 'Rainfall' ? '(mm)' : '(Ha)'}</label>
+                  <input type="number" className="form-control" name={field} value={formData[field]} onChange={handleChange} required />
+                </div>
+              ))}
+              {[{
+                name: 'District_Name', label: 'District', options: Object.keys(districtCoordinates)
+              }, {
+                name: 'Season_Encoded', label: 'Season', options: ['Rabi', 'Kharif', 'Whole Year']
+              }, {
+                name: 'Soil_Quality_Encoded', label: 'Soil Quality', options: ['Poor', 'Moderate', 'Good']
+              }, {
+                name: 'Crop', label: 'Crop', options: ['Groundnut', 'Cotton', 'Rice', 'Barley', 'Gram', 'Maize', 'Mustard', 'Peas', 'Pulses', 'Soybean', 'Sugarcane']
+              }].map(({ name, label, options }) => (
+                <div className="mb-3" key={name}>
+                  <label className="form-label">{label}</label>
+                  <select className="form-select" name={name} value={formData[name]} onChange={handleChange} required>
+                    <option value="">Select {label}</option>
+                    {options.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              ))}
+              <button type="submit" className="btn btn-primary w-100 shadow-sm fw-semibold">
+                Predict
+              </button>
+            </form>
           </motion.div>
-        )}
+        </div>
 
+        {/* Chart */}
+        {graphData.length > 0 && (
+          <div className="col-md-7">
+            <motion.div className="card shadow-lg border-0 rounded-4 bg-white p-4 mb-4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }}>
+              <h4 className="text-center text-primary mb-4">Production Overview</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={graphData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#0d6efd" />
+                </BarChart>
+              </ResponsiveContainer>
+            </motion.div>
+          </div>
+        )}
       </div>
 
-      {/* Map Section */}
-      <motion.div
-        className="mt-5"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1 }}
-      >
-        <h4 className="text-center mb-3">Selected District Location</h4>
-        <MapContainer center={mapInfo.center} zoom={mapInfo.zoom} style={{ height: '400px', width: '100%' }}>
-          <ChangeMapCenter center={mapInfo.center} />
-          <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {mapInfo.markers.map((marker, idx) => (
-            <Marker key={idx} position={marker.position} icon={customMarker}>
-              <Popup>
-                {marker.label}<br />
-                Lat: {marker.position[0].toFixed(4)}, Lon: {marker.position[1].toFixed(4)}
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+      {/* Map */}
+      <motion.div className="mt-4" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+        <h5 className="text-center text-secondary mb-3">📍 District Map</h5>
+        <div className="rounded-4 overflow-hidden shadow-sm">
+          <MapContainer center={mapInfo.center} zoom={mapInfo.zoom} style={{ height: '400px', width: '100%' }}>
+            <ChangeMapCenter center={mapInfo.center} />
+            <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {mapInfo.markers.map((marker, i) => (
+              <Marker key={i} position={marker.position} icon={L.icon({ iconUrl: markerIconPng, shadowUrl: markerShadowPng })}>
+                <Popup>{marker.label}<br />Lat: {marker.position[0].toFixed(4)}, Lon: {marker.position[1].toFixed(4)}</Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
       </motion.div>
 
-      {/* Result Section */}
+      {/* Prediction Result */}
       {result && (
-        <motion.div
-          className="mt-4 d-flex justify-content-center flex-column align-items-center"
-          ref={resultRef}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.2 }}
-        >
-          <div id="pdfContent" className="card p-4 mb-3" style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', backgroundColor: '#ffffff', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }}>
-            <h4 className="text-center mb-3">Crop Yield Prediction Report</h4>
+        <motion.div ref={resultRef} className="text-center mt-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div id="pdfContent" className="card bg-white border-0 shadow-sm rounded-4 p-4 mx-auto mb-3" style={{ maxWidth: '500px' }}>
+            <h4 className="text-primary">Prediction Report</h4>
             <p><strong>District:</strong> {formData.District_Name}</p>
             <p><strong>Crop:</strong> {formData.Crop}</p>
             <p><strong>Season:</strong> {formData.Season_Encoded}</p>
@@ -282,18 +172,9 @@ const PredictForm = () => {
             <p><strong>Rainfall:</strong> {formData.Rainfall} mm</p>
             <p><strong>Area:</strong> {formData.Area} Hectares</p>
             <hr />
-            <h5>Predicted Production:</h5>
-            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#4caf50' }}>{result} Quintals</p>
+            <h5 className="text-success fw-bold display-6">{result} Quintals</h5>
           </div>
-
-          <motion.button
-            onClick={downloadPDF}
-            className="btn btn-success"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Download PDF
-          </motion.button>
+          <button onClick={downloadPDF} className="btn btn-success shadow-sm fw-semibold">Download PDF</button>
         </motion.div>
       )}
     </div>

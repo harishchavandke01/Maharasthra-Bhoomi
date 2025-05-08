@@ -1,63 +1,75 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion'; // animation library
+import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo1.jpg';
+import './Navbar.css'; // Make sure this file exists
 
 const Navbar = () => {
   return (
-    <motion.nav 
-      className="navbar navbar-expand-lg sticky-top py-3"
-      style={{ backgroundColor: '#e9fbe5', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8 }}
-    >
+    <nav className="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-3">
       <div className="container">
-        {/* Logo and Brand */}
-        <Link className="navbar-brand d-flex align-items-center" to="/">
-          <motion.img 
-            src={logo} 
+        {/* Brand */}
+        <NavLink className="navbar-brand d-flex align-items-center" to="/">
+          <img
+            src={logo}
             alt="Logo"
-            style={{ width: '45px', height: '45px', marginRight: '10px', borderRadius: '50%' }}
-            whileHover={{ scale: 1.1 }}
+            width="45"
+            height="45"
+            className="rounded-circle me-2"
+            style={{ objectFit: 'cover', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
           />
-          <span className="fw-bold" style={{ fontSize: '24px', color: '#228B22' }}>
-            Maharashtra Bhoomi
-          </span>
-        </Link>
+          <span className="fw-bold fs-4 text-success">Maharashtra Bhoomi</span>
+        </NavLink>
 
-        {/* Toggler */}
-        <button 
-          className="navbar-toggler" 
-          type="button" 
-          data-bs-toggle="collapse" 
+        {/* Mobile Toggler */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
-          aria-controls="navbarNav" 
-          aria-expanded="false" 
+          aria-controls="navbarNav"
+          aria-expanded="false"
           aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Links */}
+        {/* Navbar Links */}
         <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul className="navbar-nav align-items-center gap-3">
+          <ul className="navbar-nav align-items-center gap-lg-3 gap-2">
             <li className="nav-item">
-              <Link className="nav-link fw-bold" to="/about" style={{ color: '#2e7d32' }}>About Us</Link>
+              <NavLink
+                to="/about"
+                className={({ isActive }) =>
+                  'nav-link fw-semibold px-2' + (isActive ? ' active-nav' : ' text-dark')
+                }
+              >
+                About Us
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="nav-link fw-bold" to="/contact" style={{ color: '#2e7d32' }}>Contact Us</Link>
+              <NavLink
+                to="/contact"
+                className={({ isActive }) =>
+                  'nav-link fw-semibold px-2' + (isActive ? ' active-nav' : ' text-dark')
+                }
+              >
+                Contact Us
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="btn btn-outline-success" to="/predict">Predict</Link>
+              <NavLink to="/predict" className="btn btn-outline-success fw-semibold">
+                Predict
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link className="btn btn-outline-success" to="/crop-recommend">Crop Recommend</Link>
+              <NavLink to="/crop-recommend" className="btn btn-outline-success fw-semibold">
+                Crop Recommend
+              </NavLink>
             </li>
           </ul>
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 
